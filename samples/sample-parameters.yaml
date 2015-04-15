@@ -20,7 +20,7 @@ config:
         - [fileDate,    False,  '20140315']
         - [tcgaversion, True,   '1.1']
         - [center,      False,  '"broad.mit.edu"']
-        - [phasing,     False,  'none']
+        - [phasing,     False,  'none']  # TODO: Think about this one.
 samples:
     NORMAL:
         description:    '"Normal sample"'
