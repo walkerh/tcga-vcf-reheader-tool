@@ -33,23 +33,27 @@ def parse_args():
 def run(args):
     """Main entry point for testing and higher-level automation"""
     CONFIG = args.parameter_map['config']
-    SAMPLE_LINE_FORMAT = '##' + CONFIG['sample_line_format'].replace(' ', '')
     fixed_headers = CONFIG['fixed_headers']
     filtered_headers = set(item[0] for item in fixed_headers)
     asserted_headers = set(item[0] for item in fixed_headers if item[1])
     with open(args.input_file_path) as fin:
         with open(args.output_file_path, 'w') as fout:
             write_fixed_headers(fout, fixed_headers)
-            for id, params in args.parameter_map['samples'].items():
-                sample_line = SAMPLE_LINE_FORMAT.format(
-                    id=id, **dict(params, **CONFIG['fixed_sample_params'])
-                )
-                write_stripped_line(fout, sample_line)
+            write_sample_lines(fout, CONFIG, args.parameter_map['samples'])
 
 
 def write_fixed_headers(fout, fixed_headers):
     for name, ignored, value in fixed_headers:
         write_meta_line(fout, name, value)
+
+
+def write_sample_lines(fout, config, samples):
+    SAMPLE_LINE_FORMAT = '##' + config['sample_line_format'].replace(' ', '')
+    for id, params in samples.items():
+        sample_line = SAMPLE_LINE_FORMAT.format(
+            id=id, **dict(params, **config['fixed_sample_params'])
+        )
+        write_stripped_line(fout, sample_line)
 
 
 def write_meta_line(fout, name, value):
