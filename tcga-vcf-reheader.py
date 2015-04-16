@@ -15,6 +15,9 @@ __VERSION__ = '0.1.0'
 
 def main():
     args = parse_args()
+    with open(args.parameter_file_path) as yaml_file:
+        args.parameter_map = yaml.load(yaml_file)
+    # TODO: Configure logging
     run(args)
 
 
@@ -29,8 +32,6 @@ def parse_args():
 
 def run(args):
     """Main entry point for testing and higher-level automation"""
-    with open(args.parameter_file_path) as yaml_file:
-        args.parameter_map = yaml.load(yaml_file)
     CONFIG = args.parameter_map['config']
     SAMPLE_LINE_FORMAT = '##' + CONFIG['sample_line_format'].replace(' ', '')
     fixed_headers = CONFIG['fixed_headers']
