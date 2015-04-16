@@ -1,7 +1,10 @@
 #!/usr/bin/env python2.7
 
 """Tool to read a TCGA Variant Call Format (VCF) file and output an
-equivalent file with a different header"""
+equivalent file with a different header.
+
+Returns exit code 1 for bad parameters and 2 for header errors detected.
+"""
 
 
 import argparse
@@ -10,7 +13,7 @@ import sys
 import yaml
 
 
-__VERSION__ = '0.1.0'
+__version__ = '1.0.0'
 
 
 def main():
@@ -18,7 +21,9 @@ def main():
     with open(args.parameter_file_path) as yaml_file:
         args.parameter_map = yaml.load(yaml_file)
     # TODO: Configure logging
-    run(args)
+    errors = run(args)
+    if errors:
+        sys.exit(2)
 
 
 def parse_args():
@@ -34,12 +39,14 @@ def run(args):
     """Main entry point for testing and higher-level automation"""
     CONFIG = args.parameter_map['config']
     fixed_headers = CONFIG['fixed_headers']
-    filtered_headers = set(item[0] for item in fixed_headers)
-    asserted_headers = set(item[0] for item in fixed_headers if item[1])
     with open(args.input_file_path) as fin:
         with open(args.output_file_path, 'w') as fout:
             write_fixed_headers(fout, fixed_headers)
             write_sample_lines(fout, CONFIG, args.parameter_map['samples'])
+            errors = process_headers(fin, fout, fixed_headers)
+            for raw_line in fin:
+                fout.write(raw_line)
+    return errors
 
 
 def write_fixed_headers(fout, fixed_headers):
@@ -54,6 +61,35 @@ def write_sample_lines(fout, config, samples):
             id=id, **dict(params, **config['fixed_sample_params'])
         )
         write_stripped_line(fout, sample_line)
+
+
+def process_headers(fin, fout, fixed_headers):
+    """Keep processing until we write the data header line."""
+    filtered_headers = set(item[0] for item in fixed_headers)
+    expected_values = {
+        name: value for name, asserted, value in fixed_headers if asserted
+    }
+    errors = False
+    for raw_line in fin:
+        if raw_line.startswith('##'):
+            # TODO: This will break if the metadata header is bad.
+            name, value = raw_line[2:].rstrip().split('=', 1)
+            if name in filtered_headers:
+                if name in expected_values:
+                    if value != expected_values[name]:
+                        errors = True
+                        # TODO: propper logging
+                        sys.stderr.write(
+                            'tcga-vcf-reheader: mismatch {}={}\n'.format(
+                                name, value
+                            )
+                        )
+            else:  # Just some other header...
+                fout.write(raw_line)
+        else:
+            break
+    fout.write(raw_line)  # raw_line should now be the data header line.
+    return errors
 
 
 def write_meta_line(fout, name, value):
