@@ -30,8 +30,8 @@ def parse_args():
 def run(args):
     """Main entry point for testing and higher-level automation"""
     with open(args.parameter_file_path) as yaml_file:
-        parameter_map = yaml.load(yaml_file)
-    CONFIG = parameter_map['config']
+        args.parameter_map = yaml.load(yaml_file)
+    CONFIG = args.parameter_map['config']
     SAMPLE_LINE_FORMAT = '##' + CONFIG['sample_line_format'].replace(' ', '')
     fixed_headers = CONFIG['fixed_headers']
     filtered_headers = set(item[0] for item in fixed_headers)
@@ -40,7 +40,7 @@ def run(args):
         with open(args.output_file_path, 'w') as fout:
             for name, ignored, value in fixed_headers:
                 write_meta_line(fout, name, value)
-            for id, params in parameter_map['samples'].items():
+            for id, params in args.parameter_map['samples'].items():
                 print id
                 
                 sample_line = SAMPLE_LINE_FORMAT.format(
