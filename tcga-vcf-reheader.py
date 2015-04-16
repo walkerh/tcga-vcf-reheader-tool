@@ -42,16 +42,20 @@ def run(args):
             for name, ignored, value in fixed_headers:
                 write_meta_line(fout, name, value)
             for id, params in args.parameter_map['samples'].items():
-                print id
-                
                 sample_line = SAMPLE_LINE_FORMAT.format(
                     id=id, **dict(params, **CONFIG['fixed_sample_params'])
                 )
-                print sample_line
+                write_stripped_line(fout, sample_line)
 
 
 def write_meta_line(fout, name, value):
     fout.write('##{}={}\n'.format(name, value))
+
+
+def write_stripped_line(fout, line):
+    """Just adds the newline."""
+    fout.write(line)
+    fout.write('\n')
 
 
 if __name__ == '__main__':
